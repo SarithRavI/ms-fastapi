@@ -27,7 +27,9 @@ settings = get_settings()
 DEBUG = settings.debug
 
 BASE_DIR = os.path.dirname(__file__)
-UPLOAD_DIR = f"{BASE_DIR}/uploaded"
+UPLOAD_DIR = f"{BASE_DIR}/uploads"
+os.makedirs(UPLOAD_DIR,exist_ok=True)
+
 app = FastAPI()
 templates = Jinja2Templates(directory = f"{BASE_DIR}/templates")
 
@@ -48,8 +50,7 @@ async def home_detail_view(file:UploadFile= File(...)):
 
     file_bytes_str = io.BytesIO(await file.read())
     # save the byte stream
-    fname = os.path(file.filename)
-    fsuffix = str(fname).suffix
+    fname,fsuffix = os.path.splitext(file.filename)
     dest = f"{UPLOAD_DIR}/{uuid.uuid1()}{fsuffix}"
     with open(dest, 'wb') as out:
         out.write(file_bytes_str.read())
