@@ -18,7 +18,6 @@ def test_post_home():
 def test_echo_img():
     test_images_path = os.path.join(BASE_DIR,'test_images')
     for path in os.listdir(test_images_path):
-        print(os.path.join(test_images_path,path))
         response = client.post("/img_echo",files={'file':open(os.path.join(test_images_path,path),'rb')})
         assert response.status_code==200
         assert response.headers['content-type'] == 'image/png'

@@ -28,7 +28,6 @@ DEBUG = settings.debug
 
 BASE_DIR = os.path.dirname(__file__)
 UPLOAD_DIR = os.path.join(BASE_DIR,'uploads')
-print(UPLOAD_DIR)
 os.makedirs(UPLOAD_DIR,exist_ok=True)
 
 app = FastAPI()
@@ -44,7 +43,6 @@ def home_detail_view():
 
 @app.post("/img_echo",response_class=FileResponse)
 async def img_echo_view(file:UploadFile= File(...),settings:Settings = Depends(get_settings)):
-    print(settings.echo_active)
     if not settings.echo_active:
         raise HTTPException(status_code = 404, detail= 'Invalid endpoint.')
 
@@ -54,5 +52,4 @@ async def img_echo_view(file:UploadFile= File(...),settings:Settings = Depends(g
     dest = os.path.join(UPLOAD_DIR,f"{uuid.uuid1()}{fsuffix}")
     with open(dest, 'wb') as out:
         out.write(file_bytes_str.read())
-    
     return dest
