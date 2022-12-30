@@ -22,7 +22,7 @@ def test_response_prediction():
     for path in os.listdir(test_images_path):
         test_img_path = os.path.join(test_images_path,path)
         test_img = open(test_img_path,'rb')
-        response = client.post("/",files={'file':test_img})
+        response = client.post("/",files={'file':test_img},headers = {'authentication':'bearer BxD11Z3SEjcyFYz3MWGJIA'})
         try:
             if '-faulty' in test_img_path:
                 test_img = None

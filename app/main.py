@@ -5,6 +5,7 @@ from fastapi import (FastAPI,
                     Depends,
                     Request,
                     File,
+                    Header,
                     UploadFile,
                     HTTPException)
 from fastapi.responses import HTMLResponse, FileResponse
@@ -13,10 +14,14 @@ from pydantic import BaseSettings
 from functools import lru_cache
 from PIL import Image
 import pytesseract 
+from typing import Union
 
 class Settings(BaseSettings):
     debug:bool = False
     echo_active:bool = False
+    auth_active:bool = True 
+    access_token:str 
+    access_token_prod:Union[str,None] = None 
 
     class Config:
         env_file = ".env"
@@ -35,12 +40,28 @@ os.makedirs(UPLOAD_DIR,exist_ok=True)
 app = FastAPI()
 templates = Jinja2Templates(directory = os.path.join(BASE_DIR,'templates'))
 
+def authenticate(settings:Settings,auth_header:str):
+    isAuth = settings.auth_active
+    access_token = settings.access_token
+
+    if isAuth:
+        method,receipt = auth_header.split()
+        if access_token == str(access_token):
+            return True
+        else:
+            return False
+
 @app.get("/",response_class=HTMLResponse) #http GET
 def home_view(request: Request, settings:Settings = Depends(get_settings)):
     return templates.TemplateResponse("home.html",{"request":request})
 
 @app.post("/") # http POST
-async def prediction_view(file:UploadFile= File(...),settings:Settings = Depends(get_settings)):
+async def prediction_view(file:UploadFile= File(...),settings:Settings = Depends(get_settings),
+                         authentication:str=Header(...)):
+    # authenticate
+    if not authenticate(settings,authentication):
+        raise HTTPException(status_code=401,detail='Unauthorized.')
+
     if not settings.echo_active:
         raise HTTPException(status_code = 404, detail= 'Invalid endpoint.')
 
