@@ -17,6 +17,14 @@ def test_faulty_prediction():
     assert response.status_code==422
     assert 'application/json' in response.headers['content-type']
 
+def test_faulty_header():
+    test_images_path = os.path.join(BASE_DIR,'test_images')
+    ex_path =  os.listdir(test_images_path)[0]
+    test_img_path = os.path.join(test_images_path,ex_path)
+    test_img = open(test_img_path,'rb')
+    response = client.post("/",files={'file':test_img},headers = {'authentication':'bearer this-is-a-faulty-token'})
+    assert response.status_code == 401
+
 def test_response_prediction():
     test_images_path = os.path.join(BASE_DIR,'test_images')
     for path in os.listdir(test_images_path):

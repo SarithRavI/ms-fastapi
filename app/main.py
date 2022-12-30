@@ -46,7 +46,7 @@ def authenticate(settings:Settings,auth_header:str):
 
     if isAuth:
         method,receipt = auth_header.split()
-        if access_token == str(access_token):
+        if access_token == str(receipt):
             return True
         else:
             return False
