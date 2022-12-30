@@ -12,6 +12,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseSettings
 from functools import lru_cache
 from PIL import Image
+import pytesseract 
 
 class Settings(BaseSettings):
     debug:bool = False
@@ -39,8 +40,26 @@ def home_view(request: Request, settings:Settings = Depends(get_settings)):
     return templates.TemplateResponse("home.html",{"request":request})
 
 @app.post("/") # http POST
-def home_detail_view():
-    return {"hello":"world"}
+async def prediction_view(file:UploadFile= File(...),settings:Settings = Depends(get_settings)):
+    if not settings.echo_active:
+        raise HTTPException(status_code = 404, detail= 'Invalid endpoint.')
+
+    file_bytes_str = io.BytesIO(await file.read())
+    try:
+        img = Image.open(file_bytes_str)
+    except:
+        img = None
+    # save the byte stream
+    if img is None:
+        raise HTTPException(status_code=404,detail= "Invalid image.")
+    
+    try:
+        text = pytesseract.image_to_string(img)
+        sentences = [x for x in text.split("\n")]        
+        return {'text':text,
+                'sentences':sentences}
+    except:
+        HTTPException(status_code=404, detail='Cannot convert the image.')
 
 @app.post("/img_echo",response_class=FileResponse)
 async def img_echo_view(file:UploadFile= File(...),settings:Settings = Depends(get_settings)):

@@ -12,9 +12,9 @@ def test_get_home():
     assert response.status_code==200
     assert 'text/html' in response.headers['content-type']
 
-def test_post_home():
+def test_faulty_prediction():
     response = client.post("/")
-    assert response.status_code==200
+    assert response.status_code==422
     assert 'application/json' in response.headers['content-type']
 
 def test_echo_img():
