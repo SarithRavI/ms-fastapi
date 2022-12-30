@@ -4,18 +4,21 @@ from app.main import app, BASE_DIR,UPLOAD_DIR
 from fastapi.testclient import TestClient
 import shutil
 from PIL import Image,ImageChops
+import requests
 from .main import get_settings
 
 client = TestClient(app)
 settings = get_settings()
 
+PROD_ENDPOINT = ""
+
 def test_get_home():
-    response = client.get("/")
+    response = requests.get(PROD_ENDPOINT)
     assert response.status_code==200
     assert 'text/html' in response.headers['content-type']
 
 def test_faulty_prediction():
-    response = client.post("/")
+    response = requests.post(PROD_ENDPOINT)
     assert response.status_code==422
     assert 'application/json' in response.headers['content-type']
 
@@ -24,7 +27,7 @@ def test_faulty_header():
     ex_path =  os.listdir(test_images_path)[0]
     test_img_path = os.path.join(test_images_path,ex_path)
     test_img = open(test_img_path,'rb')
-    response = client.post("/",files={'file':test_img},headers = {'authentication':'bearer this-is-a-faulty-token'})
+    response = requests.post(PROD_ENDPOINT,files={'file':test_img},headers = {'authentication':'bearer this-is-a-faulty-token'})
     assert response.status_code == 401
 
 def test_response_prediction():
@@ -32,7 +35,7 @@ def test_response_prediction():
     for path in os.listdir(test_images_path):
         test_img_path = os.path.join(test_images_path,path)
         test_img = open(test_img_path,'rb')
-        response = client.post("/",files={'file':test_img},headers = {'authentication':f'bearer {settings.access_token}'})
+        response = requests.post(PROD_ENDPOINT,files={'file':test_img},headers = {'authentication':f'bearer {settings.access_token_prod}'})
         try:
             if '-faulty' in test_img_path:
                 test_img = None
@@ -50,34 +53,4 @@ def test_response_prediction():
             # by using following we can allow any type of image
             assert 'application/json' in response.headers['content-type'] 
 
-
-def test_echo_img():
-    test_images_path = os.path.join(BASE_DIR,'test_images')
-    for path in os.listdir(test_images_path):
-        test_img_path = os.path.join(test_images_path,path)
-        test_img = open(test_img_path,'rb')
-        response = client.post("/img_echo",files={'file':test_img})
-        byte_str = io.BytesIO(response.content)
-        try:
-            test_img = Image.open(test_img_path)
-            uploaded_img = Image.open(byte_str)
-        except:
-            test_img = None
-            # uploaded_img = None
-        
-        if  test_img is None:
-            assert response.status_code == 404
-
-        # elif uploaded_img is None:
-        #     pass
-
-        else:
-            # checking if the test and uploaded images are the same 
-            diff = ImageChops.difference(test_img, uploaded_img).getbbox()
-            assert diff is None
-            assert response.status_code == 200
-            # response.headers['content-type'] == 'image/png'
-            # by using following we can allow any type of image
-            assert 'image/' in response.headers['content-type']  
-    shutil.rmtree(UPLOAD_DIR)
 
