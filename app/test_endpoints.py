@@ -1,5 +1,5 @@
 import os
-from app.main import app, BASE_DIR
+from app.main import app, BASE_DIR,UPLOAD_DIR
 from fastapi.testclient import TestClient
 import shutil
 
@@ -22,3 +22,6 @@ def test_echo_img():
         response = client.post("/img_echo",files={'file':open(os.path.join(test_images_path,path),'rb')})
         assert response.status_code==200
         assert response.headers['content-type'] == 'image/png'
+    
+    shutil.rmtree(UPLOAD_DIR)
+

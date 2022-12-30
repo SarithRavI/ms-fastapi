@@ -54,4 +54,5 @@ async def img_echo_view(file:UploadFile= File(...),settings:Settings = Depends(g
     dest = os.path.join(UPLOAD_DIR,f"{uuid.uuid1()}{fsuffix}")
     with open(dest, 'wb') as out:
         out.write(file_bytes_str.read())
+    
     return dest
