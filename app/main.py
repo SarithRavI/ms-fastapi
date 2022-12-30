@@ -11,6 +11,7 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseSettings
 from functools import lru_cache
+from PIL import Image
 
 class Settings(BaseSettings):
     debug:bool = False
@@ -47,9 +48,15 @@ async def img_echo_view(file:UploadFile= File(...),settings:Settings = Depends(g
         raise HTTPException(status_code = 404, detail= 'Invalid endpoint.')
 
     file_bytes_str = io.BytesIO(await file.read())
+    try:
+        img = Image.open(file_bytes_str)
+    except:
+        img = None
     # save the byte stream
+    if img is None:
+        raise HTTPException(status_code=404,detail= "Invalid image.")
+    
     _,fsuffix = os.path.splitext(file.filename)
     dest = os.path.join(UPLOAD_DIR,f"{uuid.uuid1()}{fsuffix}")
-    with open(dest, 'wb') as out:
-        out.write(file_bytes_str.read())
+    img.save(dest)
     return dest
