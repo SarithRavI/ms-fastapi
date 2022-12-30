@@ -52,14 +52,20 @@ async def prediction_view(file:UploadFile= File(...),settings:Settings = Depends
     # save the byte stream
     if img is None:
         raise HTTPException(status_code=404,detail= "Invalid image.")
-    
+
+    text = pytesseract.image_to_string(img)
     try:
-        text = pytesseract.image_to_string(img)
-        sentences = [x for x in text.split("\n")]        
-        return {'text':text,
-                'sentences':sentences}
+        sentences = [x for x in text.split("\n")]             
     except:
-        HTTPException(status_code=404, detail='Cannot convert the image.')
+        sentences = None 
+    if sentences is None:
+        raise HTTPException(status_code=404,detail='Tesseract coversion error.')
+    elif len(sentences) ==1 and sentences[0] == '':
+        raise HTTPException(status_code=404,detail='Empty image provided.')
+    else:
+        return {'text':text,
+                'sentences':sentences} 
+
 
 @app.post("/img_echo",response_class=FileResponse)
 async def img_echo_view(file:UploadFile= File(...),settings:Settings = Depends(get_settings)):
